@@ -41,7 +41,11 @@ func (uac *UserAccountController) deleteUser(w http.ResponseWriter, r *http.Requ
 		var x = []byte("Data Deleted...")
 		w.Write(x)
 	}
-	uac.uas.DeleteUserAccount(user)
+	er := uac.uas.DeleteUserAccount(user)
+	if er != nil {
+		var x = []byte(er.Error())
+		w.Write(x)
+	}
 	RespondJSON(&w, http.StatusOK, user)
 }
 
@@ -55,7 +59,11 @@ func (uac *UserAccountController) updateUser(w http.ResponseWriter, r *http.Requ
 		var x = []byte("Data Updated...")
 		w.Write(x)
 	}
-	uac.uas.UpdateUserAccount(user)
+	er := uac.uas.UpdateUserAccount(user)
+	if er != nil {
+		var x = []byte(er.Error())
+		w.Write(x)
+	}
 	RespondJSON(&w, http.StatusOK, user)
 }
 
@@ -70,8 +78,16 @@ func (uac *UserAccountController) DeleteUserByID(w http.ResponseWriter, r *http.
 	userid, _ := uuid.FromString(id)
 	user := model.User{}
 	user.ID = userid
-	uac.uas.GetUserByID(&user)
-	uac.uas.DeleteUserAccount(user)
+	er1 := uac.uas.GetUserByID(&user)
+	if er1 != nil {
+		var x = []byte(er1.Error())
+		w.Write(x)
+	}
+	er2 := uac.uas.DeleteUserAccount(user)
+	if er2 != nil {
+		var x = []byte(er2.Error())
+		w.Write(x)
+	}
 	err := UnmarshalJSON(r, &user)
 	if err != nil {
 		var x = []byte(err.Error())
@@ -84,7 +100,11 @@ func (uac *UserAccountController) DeleteUserByID(w http.ResponseWriter, r *http.
 
 func (uac *UserAccountController) AllUsers(w http.ResponseWriter, r *http.Request) {
 	content := []model.User{}
-	uac.uas.GetAllUsers(&content)
+	er := uac.uas.GetAllUsers(&content)
+	if er != nil {
+		var x = []byte(er.Error())
+		w.Write(x)
+	}
 	//fmt.Println(content)
 	RespondJSON(&w, http.StatusOK, content)
 }
@@ -99,7 +119,11 @@ func (uac *UserAccountController) NewUser(w http.ResponseWriter, r *http.Request
 		var x = []byte("Data Inserted...")
 		w.Write(x)
 	}
-	uac.uas.AddUserAccount(user)
+	er := uac.uas.AddUserAccount(user)
+	if er != nil {
+		var x = []byte(er.Error())
+		w.Write(x)
+	}
 
 }
 
