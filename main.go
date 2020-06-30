@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/sk-7600/Bank_App/BankApp/controllers"
@@ -20,9 +23,16 @@ func main() {
 	db, err := gorm.Open("mysql", "root:root@tcp(127.0.0.1:3306)/swabhav?charset=utf8&parseTime=True&loc=Local")
 	chekErr(err)
 	fmt.Println("Connection Establish...")
-	defer db.Close()
+	defer func() {
+		fmt.Println("Closing db..")
+		db.Close()
+	}()
 
 	router := mux.NewRouter()
+	if router == nil {
+		log.Fatal("No router Created")
+	}
+	fmt.Println("Server Started")
 	nuac := service.NewUserAccountService(db, &repository.GormRepository{})
 	ucon := controllers.NewUserAccountController(nuac)
 	nbas := service.NewBankAccountService(db, &repository.GormRepository{})
@@ -40,33 +50,29 @@ func main() {
 		Addr:         ":8080",
 	}
 
-	log.Fatal(server.ListenAndServe())
+	//log.Fatal(server.ListenAndServe())
+	var wait time.Duration
 
-	//Get All Details
-	// data := []model.BankAccount{}
-	// nbas.GetAllData(&data)
-	// fmt.Println(data)
+	go func() {
+		log.Fatal(server.ListenAndServe())
+	}()
 
-	// singleData := model.BankAccount{
-	// 	CustomModel: model.CustomModel{
-	// 		ID: uuid.Must(uuid.FromString("9917d25b-b4c7-482e-b9ff-742f57837955")),
-	// 	},
-	// }
-	// nbas.GetByID(&singleData)
-	// fmt.Println(singleData)
+	ch := make(chan os.Signal, 1)
 
-	// Update Account
-	// data := model.BankAccount{
-	// 	CustomModel: model.CustomModel{
-	// 		ID: uuid.Must(uuid.FromString("af3dc1ad-2e9c-43e0-9ee2-d76ca1d37224")),
-	// 	},
-	// 	Name:    "Sumit",
-	// 	Balance: 3000,
-	// }
-	// nbas.UpdateAccount(data)
+	signal.Notify(ch, os.Interrupt)
 
-	// Delete Account
-	//nbas.DeleteAccount(model.BankAccount{})
+	<-ch
+
+	ctx, cancel := context.WithTimeout(context.Background(), wait)
+	defer cancel()
+	server.Shutdown(ctx)
+	func() {
+		fmt.Println("Closing DB")
+		db.Close()
+	}()
+	fmt.Println("Server ShutDown....")
+
+	os.Exit(0)
 }
 
 func chekErr(err error) {
