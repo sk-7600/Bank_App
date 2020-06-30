@@ -34,12 +34,14 @@ func (bac *BankAccountController) NewUserAccount(w http.ResponseWriter, r *http.
 		var x = []byte("Data Inserted...")
 		w.Write(x)
 	}
-	bac.bas.AddBankAccount(bA)
+	er := bac.bas.AddBankAccount(bA)
+	writeErrorInResponse(er, w)
 }
 
 func (bac *BankAccountController) GetAllAcount(w http.ResponseWriter, r *http.Request) {
 	content := []model.BankAccount{}
-	bac.bas.GetAllData(&content)
+	er := bac.bas.GetAllData(&content)
+	writeErrorInResponse(er, w)
 	//fmt.Println(content)
 	RespondJSON(&w, http.StatusOK, content)
 }
@@ -57,4 +59,11 @@ func RespondJSON(w *http.ResponseWriter, statusCode int, content interface{}) {
 func writeToHeader(w *http.ResponseWriter, statusCode int, payload interface{}) {
 	(*w).WriteHeader(statusCode)
 	(*w).Write(payload.([]byte))
+}
+
+func writeErrorInResponse(err error, w http.ResponseWriter) {
+	if err != nil {
+		var x = []byte(err.Error())
+		w.Write(x)
+	}
 }
